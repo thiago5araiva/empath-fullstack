@@ -22,16 +22,20 @@ export class StorageService {
   private loadFromDisk() {
     try {
       if (existsSync(this.queueFile)) {
-        const queueData = readFileSync(this.queueFile, 'utf-8');
-        const parsed = JSON.parse(queueData);
-        this.queue = new Map(Object.entries(parsed));
-        console.log('laoded form disk');
+        const queueData = readFileSync(this.queueFile, 'utf-8').trim();
+        if (queueData) {
+          const parsed = JSON.parse(queueData);
+          this.queue = new Map(Object.entries(parsed));
+          console.log('Loaded queue from disk');
+        }
       }
       if (existsSync(this.progressFile)) {
-        const progressData = readFileSync(this.progressFile, 'utf-8');
-        const parsed = JSON.parse(progressData);
-        this.progress = new Map(Object.entries(parsed));
-        console.log('Load from disk');
+        const progressData = readFileSync(this.progressFile, 'utf-8').trim();
+        if (progressData) {
+          const parsed = JSON.parse(progressData);
+          this.progress = new Map(Object.entries(parsed));
+          console.log('Loaded progress from disk');
+        }
       }
     } catch (error) {
       console.error('Error loading from disk', error);
