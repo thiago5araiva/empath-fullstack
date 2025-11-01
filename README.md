@@ -1,4 +1,4 @@
-# 🎬 Video Progress Queue Challenge
+# Video Progress Queue Challenge
 
 ## Overview
 
@@ -14,7 +14,7 @@ You’re encouraged to **take creative liberties** to impress.
 
 ---
 
-## 🧠 The Goal
+## Goal
 
 - A YouTube video plays in your React app via [`react-player`](https://www.npmjs.com/package/react-player).
 - Every **3 seconds** while the video is playing, progress (current time) is sent to the backend **queue**.
@@ -23,18 +23,18 @@ You’re encouraged to **take creative liberties** to impress.
 
 ---
 
-## 🧩 Tech Stack
+## Stack
 
-| Layer | Requirements |
-|-------|---------------|
-| **Frontend** | React 18+, `react-player`, Tailwind optional |
-| **Backend** | [Bun](https://bun.sh/) + [ElysiaJS](https://elysiajs.com/) |
-| **Persistence** | In-memory objects or JSON file |
-| **Auth** | None required |
+| Layer           | Requirements                                               |
+| --------------- | ---------------------------------------------------------- |
+| **Frontend**    | React 18+, `react-player`, Tailwind optional               |
+| **Backend**     | [Bun](https://bun.sh/) + [ElysiaJS](https://elysiajs.com/) |
+| **Persistence** | In-memory objects or JSON file                             |
+| **Auth**        | None required                                              |
 
 ---
 
-## 📁 Project Structure
+## Structure
 
 You can organize your code like this (recommended):
 
@@ -58,9 +58,10 @@ You can organize your code like this (recommended):
 
 ---
 
-## ⚙️ Data Model
+## Model
 
 ### Queue Table
+
 Stores every progress event while the video is playing.
 
 ```ts
@@ -73,6 +74,7 @@ type QueueItem = {
 ```
 
 ### Progress Table
+
 Stores the furthest progress per user and video.
 
 ```ts
@@ -86,11 +88,12 @@ type Progress = {
 
 ---
 
-## 🔌 Backend API Specification
+## Backend Specification
 
 **Base URL:** `http://localhost:3000/api`
 
 ### 1. `GET /video`
+
 Returns a video URL and ID.
 
 ```json
@@ -100,14 +103,17 @@ Returns a video URL and ID.
 ---
 
 ### 2. `POST /progress/queue`
+
 Adds a progress sample to the queue.
 
 **Body:**
+
 ```json
 { "videoId": "yt-abc123", "userId": "test-user-1", "progressSeconds": 42 }
 ```
 
 **Response:**
+
 ```json
 { "ok": true }
 ```
@@ -115,13 +121,17 @@ Adds a progress sample to the queue.
 ---
 
 ### 3. `GET /progress/furthest?videoId=yt-abc123&userId=test-user-1`
+
 Retrieves the furthest progress for a given user and video.
 
 **Responses:**
+
 ```json
 { "furthestSeconds": 0 }
 ```
+
 or
+
 ```json
 { "videoId": "yt-abc123", "userId": "test-user-1", "furthestSeconds": 137 }
 ```
@@ -129,55 +139,50 @@ or
 ---
 
 ### 4. `POST /progress/run-cron`
+
 Simulates a 5-minute cron job:
+
 - For each user/video pair, find the **highest** progress in the queue.
 - If higher than the progress table value, update it.
 - Clear processed queue entries.
 
 **Response:**
+
 ```json
 { "updated": true }
 ```
 
 ---
 
-## 💻 Frontend Requirements
+## Frontend
 
 - On load:
+
   - `GET /video` → load the YouTube URL.
   - `GET /progress/furthest` → show the user’s furthest progress.
 
 - While **playing**:
+
   - Every 3 seconds → `POST /progress/queue`.
 
 - When **paused**:
+
   - `POST /progress/queue` once.
 
 - When the video **ends** or the user **leaves**:
+
   - `POST /progress/run-cron`.
 
 - Clean up timers when pausing or unmounting.
 
 **Recommended hooks & events:**
+
 - `onPlay`, `onPause`, `onEnded` from `react-player`.
 - `beforeunload` window listener to trigger cron.
 
 ---
 
-## 🧑‍💻 How You Work (Important)
-
-- **Show your thinking:** work in logical steps; we want to see how your solution evolves.
-- **Incremental pushes:** make multiple commits showing your progress.
-  - Example sequence: `init`, `add backend routes`, `basic player`, `queue posting`, `cron endpoint`, `cleanup`.
-- **AI usage is allowed.**
-  - Please include a note in your README or a short (1–2 minute) video explaining:
-    - What AI tools or prompts you used
-    - Why they were useful
-    - Any limitations or adjustments you made
-
----
-
-## ✅ Acceptance Criteria
+## Acceptance
 
 - Functional Bun + Elysia backend with all endpoints
 - React frontend that:
@@ -191,12 +196,12 @@ Simulates a 5-minute cron job:
 
 ---
 
-## 🚀 Deliverables
+## Deliverables
 
 Include the following in your repo:
 
-1. **Frontend** folder with React app  
-2. **Backend** folder with Bun/Elysia server  
+1. **Frontend** folder with React app
+2. **Backend** folder with Bun/Elysia server
 3. **README** containing:
    - How to run both sides
    - Manual test steps (see below)
@@ -204,13 +209,16 @@ Include the following in your repo:
    - AI usage note or link to short Loom/video
 
 ### Suggested Scripts
+
 **Backend:**
+
 ```bash
 bun install
 bun run dev
 ```
 
 **Frontend:**
+
 ```bash
 npm install
 npm run dev
@@ -218,49 +226,10 @@ npm run dev
 
 ---
 
-## 🧪 Example Test Flows
-
-### Flow 1 — Play → Pause
-- Watch for ~9 seconds, then pause.  
-  Expected: 3 queue posts (~3s, ~6s, ~9s) + one on pause.  
-  Run cron → furthest progress ≈ pause time.
-
-### Flow 2 — Resume → End
-- Continue watching past previous point, then let it end.  
-  `onEnded` triggers cron → furthest progress increases.
-
-### Flow 3 — Reload
-- Refresh the page.  
-  `GET /progress/furthest` should show the stored furthest time.
-
----
-
-## 🧾 Evaluation Rubric
-
-| Area | What We’re Looking For |
-|------|------------------------|
-| **Correctness** | Logic works as described |
-| **Code Quality** | Clean, readable, maintainable |
-| **Data Flow** | Frontend ↔ Backend sync is clear |
-| **React Hygiene** | Proper cleanup, effects, intervals |
-| **Architecture** | Separation of concerns and clarity |
-| **Commit History** | Incremental progress and context |
-| **AI Explanation** | Clear and transparent usage |
-
----
-
-## ⭐ Stretch Goals (Optional)
-If you finish early, try one or more:
-- Show a visual progress bar for current vs. furthest time  
-- Add retry logic for failed network requests  
-- Support multiple videos  
-- Persist to a JSON file instead of memory  
-
----
-
-## 📦 Example Starter (Optional)
+## Example
 
 ### `/backend/index.ts`
+
 ```ts
 import { Elysia } from 'elysia'
 
@@ -304,6 +273,7 @@ console.log('Backend running on http://localhost:3000')
 ---
 
 ### `/frontend/src/App.tsx`
+
 ```tsx
 import { useEffect, useRef, useState } from 'react'
 import ReactPlayer from 'react-player'
@@ -318,10 +288,12 @@ export default function App() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    fetch(`${API}/video`).then(r => r.json()).then(setVideo)
+    fetch(`${API}/video`)
+      .then((r) => r.json())
+      .then(setVideo)
     fetch(`${API}/progress/furthest?userId=${USER_ID}&videoId=yt-abc123`)
-      .then(r => r.json())
-      .then(d => setFurthest(d.furthestSeconds || 0))
+      .then((r) => r.json())
+      .then((d) => setFurthest(d.furthestSeconds || 0))
 
     const unload = () => fetch(`${API}/progress/run-cron`, { method: 'POST' })
     window.addEventListener('beforeunload', unload)
@@ -333,7 +305,11 @@ export default function App() {
     await fetch(`${API}/progress/queue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ videoId: 'yt-abc123', userId: USER_ID, progressSeconds: t }),
+      body: JSON.stringify({
+        videoId: 'yt-abc123',
+        userId: USER_ID,
+        progressSeconds: t,
+      }),
     })
   }
 
@@ -357,8 +333,14 @@ export default function App() {
         url={video.url}
         controls
         onPlay={startInterval}
-        onPause={() => { clearIntervalIfAny(); enqueueProgress() }}
-        onEnded={() => { clearIntervalIfAny(); fetch(`${API}/progress/run-cron`, { method: 'POST' }) }}
+        onPause={() => {
+          clearIntervalIfAny()
+          enqueueProgress()
+        }}
+        onEnded={() => {
+          clearIntervalIfAny()
+          fetch(`${API}/progress/run-cron`, { method: 'POST' })
+        }}
         width="640px"
         height="360px"
       />
@@ -366,3 +348,51 @@ export default function App() {
   )
 }
 ```
+
+
+---
+
+## Prettier (frontend + backend)
+
+Prettier is configured at the repository root and targets both `./frontend` and `./backend`.
+
+- Config file: `.prettierrc.json`
+- Ignore file: `.prettierignore`
+- Prettier version: defined in root `package.json`
+
+### CLI usage
+
+From the repository root:
+
+```bash
+# Write changes
+npm run format
+
+# Check only (CI-friendly)
+npm run format:check
+```
+
+These scripts format files under `backend/` and `frontend/` with common extensions (ts, tsx, js, json, css, md, html, yml/yaml, etc.).
+
+### WebStorm integration (format on save)
+
+Use the project’s Prettier binary and enable “Run on Save”.
+
+WebStorm 2024.2+
+1) Open Settings/Preferences → Tools → Actions on Save.
+2) Check “Run Prettier”.
+3) Prettier package: select the project Prettier at `node_modules/prettier` (root).
+4) Configuration file: it will auto-detect `.prettierrc.json` at the root.
+5) Optionally restrict to paths: `{backend,frontend}/**/*`.
+
+WebStorm 2023.x (older path)
+1) Settings/Preferences → Languages & Frameworks → JavaScript → Prettier.
+2) Prettier package: `node_modules/prettier` (root).
+3) Configuration: leave empty to auto-detect or select `.prettierrc.json`.
+4) Enable “On code reformat” and “On save”.
+5) Optionally set “Run for files” to `{backend,frontend}/**/*`.
+
+Notes
+- Prettier will respect `.prettierignore` (dist, build, lockfiles, etc.).
+- If you use Bun for the backend, that’s fine — Prettier runs via Node under your IDE/terminal. Use `npm` or `pnpm`/`yarn` at the repo root to invoke the scripts.
+- If WebStorm doesn’t auto-detect, click the folder icon and choose the project’s `node_modules/prettier`.
