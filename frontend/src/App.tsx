@@ -32,12 +32,18 @@ export default function App() {
     const loadData = async () => {
       try {
         const videoRes = await fetch(`${API_URL}/video`)
+        if (!videoRes.ok) {
+          throw new Error(`Failed to fetch video: ${videoRes.status} ${videoRes.statusText}`)
+        }
         const videoData = await videoRes.json()
         setVideo(videoData)
 
         const progressRes = await fetch(
           `${API_URL}/progress/furthest?userId=${USER_ID}&videoId=${videoData.videoId}`
         )
+        if (!progressRes.ok) {
+          throw new Error(`Failed to fetch progress: ${progressRes.status} ${progressRes.statusText}`)
+        }
         const progressData = await progressRes.json()
         setFurthestProgress(progressData.furthestSeconds || 0)
       } catch (error) {
@@ -49,6 +55,18 @@ export default function App() {
 
     loadData()
   }, [])
+
+  // Seek to furthest progress when video loads
+  useEffect(() => {
+    if (video && furthestProgress > 0 && playerRef.current) {
+      const timer = setTimeout(() => {
+        if (playerRef.current) {
+          playerRef.current.seekTo(furthestProgress)
+        }
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [video, furthestProgress])
 
   const enqueueProgress = useCallback(async () => {
     if (!video) return
@@ -181,7 +199,7 @@ export default function App() {
             )}
           </div>
 
-          {video && (
+          {video && video.url && (
             <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
               <ReactPlayer
                 ref={playerRef}
